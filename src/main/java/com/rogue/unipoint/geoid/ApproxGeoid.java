@@ -19,12 +19,12 @@ public class ApproxGeoid implements Geoid {
     
     @Override
     public double convertLatToMeters(double lat) {
-        return lat / magicNumber;
+        return lat * magicNumber;
     }
 
     @Override
     public double convertLonToMeters(double lon, double lat) {
-        return lon / (magicNumber * Math.cos(lat));
+        return lon * magicNumber * Math.cos(lat);
     }
     
     public static ApproxGeoid getInstance() {

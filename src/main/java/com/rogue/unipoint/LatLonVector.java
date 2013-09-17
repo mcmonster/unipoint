@@ -1,5 +1,7 @@
 package com.rogue.unipoint;
 
+import com.bbn.openmap.proj.Length;
+import com.bbn.openmap.proj.coords.LatLonPointDouble;
 import static com.google.common.base.Preconditions.*;
 
 /**
@@ -15,15 +17,13 @@ public class LatLonVector {
     public LatLonVector(LatLonPoint from, LatLonPoint to) {
         this.from = checkNotNull(from);
         this.to = checkNotNull(to);
-        
-        checkArgument(from.geoid() == to.geoid(), "Expected the points in "
-                + "comprising the vector to be mapped on the same geoid. These "
-                + "points are using two different geoid, thus the vector cannot "
-                + "be properly evaluated!");
     }
     
     public double inMeters() {
-        return from.geoid().inMeters(this);
+        LatLonPointDouble fromLL = new LatLonPointDouble(from.lat(), from.lon());
+        LatLonPointDouble toLL = new LatLonPointDouble(to.lat(), to.lon());
+        
+        return Length.METER.fromRadians(fromLL.distance(toLL));
     }
     
     public LatLonPoint from() { return from; }

@@ -1,7 +1,12 @@
 package com.rogue.unipoint;
 
+import com.bbn.openmap.proj.Ellipsoid;
+import com.bbn.openmap.proj.Length;
+import com.bbn.openmap.proj.coords.LatLonPointDouble;
+import com.bbn.openmap.proj.coords.MGRSPoint;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Objects;
+import com.rogue.unipoint.MgrsPoint.Resolution;
 import com.rogue.unipoint.geoid.ApproxGeoid;
 import com.rogue.unipoint.geoid.Geoid;
 
@@ -14,9 +19,6 @@ public class LatLonPoint {
     /** In meters above sea level. //TODO Geoid height? */
     private final double altitude;
     
-    /** Shape of the earth used in calculations. */
-    private final Geoid geoid;
-    
     /** North is positive, south is negative. */
     private final double lat;
     
@@ -26,14 +28,9 @@ public class LatLonPoint {
     public LatLonPoint() {
         this(0, 0, 0); //TODO Change the default to something better
     }
-    
+
     public LatLonPoint(double altitude, double lat, double lon) {
-        this(altitude, ApproxGeoid.getInstance(), lat, lon);
-    }
-    
-    public LatLonPoint(double altitude, Geoid geoid, double lat, double lon) {
         this.altitude = altitude;
-        this.geoid = checkNotNull(geoid);
         this.lat = lat;
         this.lon = lon;
     }
@@ -43,7 +40,7 @@ public class LatLonPoint {
     /** {@inheritDocs} */
     @Override
     public LatLonPoint clone() {
-        return new LatLonPoint(this.altitude, this.geoid, this.lat, this.lon);
+        return new LatLonPoint(this.altitude, this.lat, this.lon);
     }
     
     public LatLonVector distanceTo(LatLonPoint to) {
@@ -51,11 +48,17 @@ public class LatLonPoint {
     }
     
     public double distanceToLatInMeters(LatLonPoint to) {
-        return geoid.convertLatToMeters(to.lat - this.lat);
+        LatLonPointDouble thisLL = new LatLonPointDouble(this.lat, this.lon);
+        LatLonPointDouble toLL   = new LatLonPointDouble(to.lat, this.lon);
+        
+        return Length.METER.fromRadians(thisLL.distance(toLL));
     }
     
     public double distanceToLonInMeters(LatLonPoint to) {
-        return geoid.convertLonToMeters(to.lon - this.lon, lat);
+        LatLonPointDouble thisLL = new LatLonPointDouble(this.lat, this.lon);
+        LatLonPointDouble toLL   = new LatLonPointDouble(this.lat, to.lon);
+        
+        return Length.METER.fromRadians(thisLL.distance(toLL));
     }
     
     @Override
@@ -69,8 +72,6 @@ public class LatLonPoint {
                Objects.equal(this.lat, point.lat) &&
                Objects.equal(this.lon, point.lon);
     }
-    
-    public Geoid geoid() { return geoid; }
     
     @Override
     public int hashCode() {
@@ -94,15 +95,26 @@ public class LatLonPoint {
     }
     
     public LatLonPoint plusLatInMeters(double value) {
-        return geoid.plusLatInMeters(this, value);
+        final boolean isRads = true;
+        LatLonPointDouble point = new LatLonPointDouble(this.lat, this.lon);
+        point = new LatLonPointDouble(
+                point.getRadLat() + Length.METER.toRadians(value), point.getRadLon(),
+                isRads);
+        
+        return new LatLonPoint(this.altitude, point.getLatitude(), point.getLongitude());
     }
     
-    public LatLonPoint plusLon(float value) {
+    public LatLonPoint plusLon(double value) {
         return new LatLonPoint(this.altitude, this.lat, this.lon + value);
     }
     
     public LatLonPoint plusLonInMeters(double value) {
-        return geoid.plusLonInMeters(this, value);
+        final boolean     isRads = true;
+        LatLonPointDouble point = new LatLonPointDouble(this.lat, this.lon);
+        point = new LatLonPointDouble(
+                point.getRadLat(), point.getRadLon() + Length.METER.toRadians(value), isRads);
+        
+        return new LatLonPoint(this.altitude, point.getLatitude(), point.getLongitude());
     }
     
     @Override
@@ -131,6 +143,22 @@ public class LatLonPoint {
             this.altitude = from.altitude;
             this.lat = from.lat;
             this.lon = from.lon;
+            return this;
+        }
+        
+        public LatLonPointBuilder from(MgrsPoint from) {
+            return from(from, from.getResolution());
+        }
+        
+        public LatLonPointBuilder from(MgrsPoint from, Resolution resolution) {
+            MGRSPoint mgrs = new MGRSPoint(from.toString(resolution));
+            com.bbn.openmap.proj.coords.LatLonPoint ll = new com.bbn.openmap.proj.coords.LatLonPointDouble();
+            MGRSPoint.MGRStoLL(mgrs, Ellipsoid.WGS_84, ll);
+            
+            this.altitude = 0;
+            this.lat = ll.getLatitude();
+            this.lon = ll.getLongitude();
+            
             return this;
         }
         

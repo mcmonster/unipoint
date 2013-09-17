@@ -1,8 +1,11 @@
 package com.rogue.unipoint;
 
-import com.berico.coords.Coordinates;
+import com.bbn.openmap.proj.coords.MGRSPoint;
 import static com.google.common.base.Preconditions.*;
 import static com.rogue.unipoint.GridPoint.GridPointBuilder.newGridPoint;
+import static com.rogue.unipoint.LatLonPoint.LatLonPointBuilder.newLatLonPoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents a coordinate in the Military Grade Reference System. Immutable!
@@ -13,6 +16,8 @@ public class MgrsPoint {
     /** In which grid zone the point lies. */
     private final String gridZone;
     
+    private static final Logger logger = LoggerFactory.getLogger("MgrsPoint");
+    
     /** Position within the sub-grid zone. */
     private final GridPoint position;
     
@@ -21,9 +26,6 @@ public class MgrsPoint {
     
     /** 100 Km resolution polygon in which the point lies. */
     private final String subGridZone;
-    
-    /** Used when logging events. */
-    private static final String TAG = "MgrsPoint";
     
     /** Resolution of the point. */
     public enum Resolution {
@@ -98,20 +100,23 @@ public class MgrsPoint {
      */
     public MgrsPoint(LatLonPoint latlon, Resolution resolution) {
         this.resolution = checkNotNull(resolution);
-        String mgrs = Coordinates.mgrsFromLatLon(latlon.lat(), latlon.lon());
+        com.bbn.openmap.proj.coords.LatLonPoint ll 
+                = new com.bbn.openmap.proj.coords.LatLonPointDouble(latlon.lat(), latlon.lon());
+        String mgrs = MGRSPoint.LLtoMGRS(ll).getMGRS();
+        logger.info("MGRS String: " + mgrs);
 
         // If the easting grid zone is a single digit
-        if (mgrs.length() == "0XXX 00000 00000".length()) { 
+        if (mgrs.length() == "0XXX0000000000".length()) { 
             this.gridZone = mgrs.substring(0, 2);
             this.subGridZone = mgrs.substring(2, 4);
-            this.position = newGridPoint().withColumn(mgrs.substring(5, 10))
-                                          .withRow(mgrs.substring(11, 16))
+            this.position = newGridPoint().withColumn(mgrs.substring(4, 9))
+                                          .withRow(mgrs.substring(9, 14))
                                           .build();
         } else { // If the easting grid zone is a double digit
             this.gridZone = mgrs.substring(0, 3);
             this.subGridZone = mgrs.substring(3, 5);
-            this.position = newGridPoint().withColumn(mgrs.substring(6, 11))
-                                          .withRow(mgrs.substring(12, 17))
+            this.position = newGridPoint().withColumn(mgrs.substring(5, 10))
+                                          .withRow(mgrs.substring(10, 15))
                                           .build();
         }
     }
@@ -138,6 +143,33 @@ public class MgrsPoint {
         else if (dist < -totalNorthingSize / 2) dist += totalNorthingSize;
         
         return dist;
+    }
+    
+    /**
+     * Calculates where the lat-lon point lies inside the 9 grid pixel neighborhood
+     * around this pixel. This function is useful because a lat-lon point can be
+     * higher resolution than this point.
+     * 
+     * @param point
+     * @return 
+     */
+    public Point2D calcSubPixelOffset(LatLonPoint point) {
+        LatLonPoint center         = newLatLonPoint().from(this).build();
+        Point2D     subPixelOffset = new Point2D(); 
+        double      unitDistance   = Math.pow(10, resolution.raw() - 1);
+        
+        logger.info("Unit Distance:     " + unitDistance);
+        logger.info("CenterPoint MGRS:  " + this.toString());
+        logger.info("CenterPoint LL:    " + center.toString());
+        logger.info("Point:             " + point);
+        logger.info("Center-Point Lon:  " + center.distanceToLonInMeters(point));
+        logger.info("Center-Point Lat:  " + center.distanceToLatInMeters(point));
+        
+        subPixelOffset.setX(center.distanceToLonInMeters(point) / unitDistance);
+        subPixelOffset.setY(center.distanceToLatInMeters(point) / unitDistance);
+        logger.info("Offset: " + subPixelOffset);
+        
+        return subPixelOffset;
     }
     
     public GridPoint distanceTo(MgrsPoint point) {
@@ -176,6 +208,19 @@ public class MgrsPoint {
         
         return newGridPoint().withColumn(easting).withRow(northing).build();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final MgrsPoint other = (MgrsPoint) obj;
+        
+        return this.toString().equals(other.toString());
+    }
     
     public String getGridZone() { return gridZone; }
     public int getGridZoneEasting() { 
@@ -206,6 +251,8 @@ public class MgrsPoint {
         return getPosition(resolution).getRow();
     }
     
+    public Resolution getResolution() { return resolution; }
+    
     public String getSubGridZone() { return subGridZone; }
     public char getSubGridEasting() { return subGridZone.charAt(0); }
     public char getSubGridNorthing() { return subGridZone.charAt(1); }
@@ -222,6 +269,20 @@ public class MgrsPoint {
         else { return subGrid - 'A' - 1; }
     }
     
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 31 * hash + (this.gridZone != null ? this.gridZone.hashCode() : 0);
+        hash = 31 * hash + (this.position != null ? this.position.hashCode() : 0);
+        hash = 31 * hash + (this.resolution != null ? this.resolution.hashCode() : 0);
+        hash = 31 * hash + (this.subGridZone != null ? this.subGridZone.hashCode() : 0);
+        return hash;
+    }
+    
+    public MgrsPoint plusEasting(int scalar) {
+        return plusEasting(scalar, resolution);
+    }
+    
     public MgrsPoint plusEasting(int scalar, Resolution resolution) {
         int scale = (int) Math.pow(10, resolution.raw() - 1);
         
@@ -234,6 +295,10 @@ public class MgrsPoint {
         } else { // If the current res is equal or higher
             return builder.build();
         }
+    }
+    
+    public MgrsPoint plusNorthing(int scalar) {
+        return plusNorthing(scalar, resolution);
     }
     
     public MgrsPoint plusNorthing(int scalar, Resolution resolution) {
@@ -259,16 +324,16 @@ public class MgrsPoint {
         String rep = gridZone + subGridZone;
         
         String easting = String.format("%05d", position.getColumn());
-        rep += " " + easting.substring(0, 6 - resolution.raw());
+        rep += easting.substring(0, 6 - resolution.raw());
         
         String northing = String.format("%05d", position.getRow());
-        rep += " " + northing.substring(0, 6 - resolution.raw());
+        rep += northing.substring(0, 6 - resolution.raw());
         
         return rep;
     }
     
     public static class MgrsPointBuilder {
-        private String     gridZone = "AA";
+        private String     gridZone = "1A";
         private GridPoint  position = new GridPoint();
         private Resolution resolution = Resolution.ONE_METER;
         private String     subGridZone = "AA";
@@ -289,6 +354,7 @@ public class MgrsPoint {
         public static MgrsPointBuilder newMgrsPoint() { return new MgrsPointBuilder(); }
         
         public MgrsPointBuilder withEasting(int scalar) {
+            logger.info("WithEasting(" + scalar + ")...");
             if (scalar >= 0) {
                 position = new GridPoint(scalar, position.getRow());
             } else {
@@ -299,6 +365,7 @@ public class MgrsPoint {
         }
         
         public MgrsPointBuilder withNorthing(int scalar) {
+            logger.info("WithNorthing(" + scalar + ")...");
             if (scalar >= 0) {
                 position = new GridPoint(position.getColumn(), scalar);
             } else {
