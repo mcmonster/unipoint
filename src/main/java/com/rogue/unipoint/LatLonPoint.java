@@ -3,7 +3,6 @@ package com.rogue.unipoint;
 import com.bbn.openmap.proj.Ellipsoid;
 import com.bbn.openmap.proj.GreatCircle;
 import com.bbn.openmap.proj.Length;
-import com.bbn.openmap.proj.coords.LatLonPointDouble;
 import com.bbn.openmap.proj.coords.MGRSPoint;
 import com.google.common.base.Objects;
 import com.rogue.unipoint.MgrsPoint.Resolution;
@@ -50,19 +49,38 @@ public class LatLonPoint {
     }
     
     public double distanceToLatInMeters(LatLonPoint to) {
-        LatLonPointDouble thisLL = new LatLonPointDouble(this.lat, this.lon);
-        LatLonPointDouble toLL   = new LatLonPointDouble(to.lat, to.lon);
+        double fromLatRadians = Length.DECIMAL_DEGREE.toRadians(this.lat());
+        double fromLonRadians = Length.DECIMAL_DEGREE.toRadians(this.lon());
+        double toLatRadians   = Length.DECIMAL_DEGREE.toRadians(to.lat());
+        double toLonRadians   = Length.DECIMAL_DEGREE.toRadians(this.lon());
         
-        return Length.METER.fromRadians(thisLL.distance(toLL));
-        //return (to.lat - this.lat) * 111111.0;
+        double arcLength = GreatCircle.sphericalDistance(
+                fromLatRadians, fromLonRadians, toLatRadians, toLonRadians);
+        arcLength = Length.METER.fromRadians(arcLength);
+        
+        double azimuth = GreatCircle.sphericalAzimuth(fromLatRadians, fromLonRadians,
+                                                      toLatRadians, toLonRadians);
+        if (Math.abs(azimuth) > Math.PI / 2) arcLength = -arcLength;
+        
+        return arcLength;
     }
     
     public double distanceToLonInMeters(LatLonPoint to) {
-        LatLonPointDouble thisLL = new LatLonPointDouble(this.lat, this.lon);
-        LatLonPointDouble toLL   = new LatLonPointDouble(to.lat, to.lon);
+        double fromLatRadians = Length.DECIMAL_DEGREE.toRadians(this.lat());
+        double fromLonRadians = Length.DECIMAL_DEGREE.toRadians(this.lon());
+        double toLatRadians   = Length.DECIMAL_DEGREE.toRadians(this.lat());
+        double toLonRadians   = Length.DECIMAL_DEGREE.toRadians(to.lon());
         
-        return Length.METER.fromRadians(thisLL.distance(toLL));
-        //return (to.lon - this.lon) * 111111.0 * Math.cos(Math.toRadians(lat));
+        double arcLength = GreatCircle.sphericalDistance(
+                fromLatRadians, fromLonRadians, toLatRadians, toLonRadians);
+        arcLength = Length.METER.fromRadians(arcLength);
+        
+        double azimuth = GreatCircle.sphericalAzimuth(fromLatRadians, fromLonRadians,
+                                                      toLatRadians, toLonRadians);
+        
+        if (azimuth < 0) arcLength = -arcLength;
+        
+        return arcLength;
     }
     
     @Override

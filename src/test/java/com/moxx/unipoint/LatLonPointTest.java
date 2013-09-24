@@ -58,5 +58,48 @@ public class LatLonPointTest {
         expected = Math.sqrt(2);
         assertTrue("One up, one over",
                 areEqual(expected, point1.distanceTo(oneUpOneOver).inMeters(), tolerance));
+        
+        expected = 1.0;
+        assertTrue("Lon distance, one up one over",
+                areEqual(expected, point1.distanceToLonInMeters(oneUpOneOver), tolerance));
+        
+        expected = -1.0;
+        assertTrue("Lon distance in opposite direction, one up one over",
+                areEqual(expected, oneUpOneOver.distanceToLonInMeters(point1), tolerance));
+        
+        expected = 1.0;
+        assertTrue("Lat distance, one up one over",
+                areEqual(expected, point1.distanceToLatInMeters(oneUpOneOver), tolerance));
+        
+        expected = -1.0;
+        assertTrue("Lat distance in opposite direction, one up one over",
+                areEqual(expected, oneUpOneOver.distanceToLatInMeters(point1), tolerance));
+        
+        LatLonPoint realClose = point1.plusMeters(0.1, 0.1);
+        expected = Math.sqrt(2) * 0.1;
+        assertTrue("Real close",
+                areEqual(expected, point1.distanceTo(realClose).inMeters(), tolerance));
+        
+        expected = 0.1;
+        assertTrue("Real close lat dist",
+                areEqual(expected, point1.distanceToLatInMeters(realClose), tolerance));
+        
+        expected = 0.1;
+        assertTrue("Real close lon dist",
+                areEqual(expected, point1.distanceToLonInMeters(realClose), tolerance));
+        
+        LatLonPoint reallyReallyClose = point1.plusMeters(0.00001, 0.00001);
+        expected = Math.sqrt(2) * 0.00001;
+        assertTrue("Really really close",
+                areEqual(expected, point1.distanceTo(reallyReallyClose).inMeters(), tolerance));
+        
+        expected = 0.00001;
+        assertTrue("Really really close, lat dist",
+                areEqual(expected, point1.distanceToLatInMeters(reallyReallyClose), tolerance));
+        
+        expected = 0.00001;
+        assertTrue("Really really close, lon dist",
+                areEqual(expected, point1.distanceToLonInMeters(reallyReallyClose), tolerance));
+        
     }
 }
