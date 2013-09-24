@@ -1,14 +1,14 @@
 package com.rogue.unipoint;
 
 import com.bbn.openmap.proj.Ellipsoid;
+import com.bbn.openmap.proj.GreatCircle;
 import com.bbn.openmap.proj.Length;
 import com.bbn.openmap.proj.coords.LatLonPointDouble;
 import com.bbn.openmap.proj.coords.MGRSPoint;
-import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Objects;
 import com.rogue.unipoint.MgrsPoint.Resolution;
-import com.rogue.unipoint.geoid.ApproxGeoid;
-import com.rogue.unipoint.geoid.Geoid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents a point in the geospace coordinate system, immutable and fluent stylee!
@@ -21,6 +21,8 @@ public class LatLonPoint {
     
     /** North is positive, south is negative. */
     private final double lat;
+    
+    private static final Logger logger = LoggerFactory.getLogger("LatLonPoint");
     
     /** East is positive, west is negative. */
     private final double lon;
@@ -49,16 +51,18 @@ public class LatLonPoint {
     
     public double distanceToLatInMeters(LatLonPoint to) {
         LatLonPointDouble thisLL = new LatLonPointDouble(this.lat, this.lon);
-        LatLonPointDouble toLL   = new LatLonPointDouble(to.lat, this.lon);
+        LatLonPointDouble toLL   = new LatLonPointDouble(to.lat, to.lon);
         
         return Length.METER.fromRadians(thisLL.distance(toLL));
+        //return (to.lat - this.lat) * 111111.0;
     }
     
     public double distanceToLonInMeters(LatLonPoint to) {
         LatLonPointDouble thisLL = new LatLonPointDouble(this.lat, this.lon);
-        LatLonPointDouble toLL   = new LatLonPointDouble(this.lat, to.lon);
+        LatLonPointDouble toLL   = new LatLonPointDouble(to.lat, to.lon);
         
         return Length.METER.fromRadians(thisLL.distance(toLL));
+        //return (to.lon - this.lon) * 111111.0 * Math.cos(Math.toRadians(lat));
     }
     
     @Override
@@ -95,13 +99,9 @@ public class LatLonPoint {
     }
     
     public LatLonPoint plusLatInMeters(double value) {
-        final boolean isRads = true;
-        LatLonPointDouble point = new LatLonPointDouble(this.lat, this.lon);
-        point = new LatLonPointDouble(
-                point.getRadLat() + Length.METER.toRadians(value), point.getRadLon(),
-                isRads);
+        double dist = Length.DECIMAL_DEGREE.fromRadians(Length.METER.toRadians(value));
         
-        return new LatLonPoint(this.altitude, point.getLatitude(), point.getLongitude());
+        return new LatLonPoint(this.altitude, this.lat + dist, this.lon);
     }
     
     public LatLonPoint plusLon(double value) {
@@ -109,12 +109,21 @@ public class LatLonPoint {
     }
     
     public LatLonPoint plusLonInMeters(double value) {
-        final boolean     isRads = true;
-        LatLonPointDouble point = new LatLonPointDouble(this.lat, this.lon);
-        point = new LatLonPointDouble(
-                point.getRadLat(), point.getRadLon() + Length.METER.toRadians(value), isRads);
+        double latRads = Length.DECIMAL_DEGREE.toRadians(this.lat);
+        double lonValue = Length.DECIMAL_DEGREE.fromRadians(
+                Length.METER.toRadians(value) / Math.cos(latRads));
         
-        return new LatLonPoint(this.altitude, point.getLatitude(), point.getLongitude());
+        return new LatLonPoint(this.altitude, this.lat, this.lon + lonValue);
+    }
+    
+    public LatLonPoint plusMeters(double plusLat, double plusLon) {
+        double latValue = Length.DECIMAL_DEGREE.fromRadians(
+                Length.METER.toRadians(plusLat));
+        double currentLatRads = Length.DECIMAL_DEGREE.toRadians(this.lat);
+        double lonValue = Length.DECIMAL_DEGREE.fromRadians(
+                Length.METER.toRadians(plusLon) / Math.cos(currentLatRads));
+        
+        return new LatLonPoint(this.altitude, this.lat + latValue, this.lon + lonValue);
     }
     
     @Override

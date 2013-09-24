@@ -1,5 +1,6 @@
 package com.rogue.unipoint;
 
+import com.bbn.openmap.proj.GreatCircle;
 import com.bbn.openmap.proj.Length;
 import com.bbn.openmap.proj.coords.LatLonPointDouble;
 import static com.google.common.base.Preconditions.*;
@@ -20,10 +21,14 @@ public class LatLonVector {
     }
     
     public double inMeters() {
-        LatLonPointDouble fromLL = new LatLonPointDouble(from.lat(), from.lon());
-        LatLonPointDouble toLL = new LatLonPointDouble(to.lat(), to.lon());
+        double fromLatRadians = Length.DECIMAL_DEGREE.toRadians(from.lat());
+        double fromLonRadians = Length.DECIMAL_DEGREE.toRadians(from.lon());
+        double toLatRadians   = Length.DECIMAL_DEGREE.toRadians(to.lat());
+        double toLonRadians   = Length.DECIMAL_DEGREE.toRadians(to.lon());
         
-        return Length.METER.fromRadians(fromLL.distance(toLL));
+        double arcLength = GreatCircle.sphericalDistance(
+                fromLatRadians, fromLonRadians, toLatRadians, toLonRadians);
+        return Length.METER.fromRadians(arcLength);
     }
     
     public LatLonPoint from() { return from; }

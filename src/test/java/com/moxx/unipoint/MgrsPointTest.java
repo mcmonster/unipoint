@@ -1,9 +1,10 @@
 package com.moxx.unipoint;
 
 import com.bbn.openmap.proj.Ellipsoid;
+import com.bbn.openmap.proj.Length;
+import com.bbn.openmap.proj.coords.LatLonPoint;
 import com.bbn.openmap.proj.coords.LatLonPointDouble;
 import com.bbn.openmap.proj.coords.MGRSPoint;
-import com.rogue.unipoint.LatLonPoint;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -32,123 +33,80 @@ public class MgrsPointTest {
 
     @Test
     public void testConversion() {
-        /*LatLonPoint base    = newLatLonPoint().withLat(0.0).withLon(0.0).build();
+        /*LatLonPoint ll = new LatLonPointDouble(0, 0);
+        MGRSPoint point = MGRSPoint.LLtoMGRS(ll);
+        logger.info(point.getMGRS() + " = (0,0)");
+        point = new MGRSPoint("30NZF3397800000");
+        MGRSPoint.MGRStoLL(point, Ellipsoid.WGS_84, ll);
+        logger.info("30NZF3397800000 = (" + ll.getLatitude() + "," + ll.getLongitude() + ")");
         
-        MgrsPoint   mgrs   = new MgrsPoint(base);
-        LatLonPoint latlon = newLatLonPoint().from(mgrs).build();
-        double      dist   = base.distanceTo(latlon).inMeters();
-        logger.info("Mgrs(0,0)                = " + mgrs);
-        logger.info("LatLon(Mgrs(0,0))        = " + latlon);
-        logger.info("Dist(LatLon(Mgrs(0,0)))  = " + dist);
-        
-        mgrs   = new MgrsPoint(base.plusLatInMeters(1));
-        latlon = newLatLonPoint().from(mgrs).build();
-        dist   = base.distanceTo(latlon).inMeters();
-        logger.info("Mgrs(0,1)                = " + mgrs);
-        logger.info("LatLon(Mgrs(0,1))        = " + latlon);
-        logger.info("Dist(LatLon(Mgrs(0, 1))  = " + dist);
-        
-        mgrs   = new MgrsPoint(base.plusLatInMeters(-1));
-        latlon = newLatLonPoint().from(mgrs).build();
-        dist   = base.distanceTo(latlon).inMeters();
-        logger.info("Mgrs(0,-1)               = " + mgrs);
-        logger.info("LatLon(Mgrs(0,-1))       = " + latlon);
-        logger.info("Dist(LatLon(Mgrs(0,-1))  = " + dist);
-        
-        mgrs   = new MgrsPoint(base.plusLonInMeters(1));
-        latlon = newLatLonPoint().from(mgrs).build();
-        dist   = base.distanceTo(latlon).inMeters();
-        logger.info("Mgrs(1,0)                = " + mgrs);
-        logger.info("LatLon(Mgrs(1,0))        = " + latlon);
-        logger.info("Dist(LatLon(Mgrs(1,0)))  = " + dist);
-        
-        mgrs   = new MgrsPoint(base.plusLonInMeters(-1));
-        latlon = newLatLonPoint().from(mgrs).build();
-        dist   = base.distanceTo(latlon).inMeters();
-        logger.info("Mgrs(-1,0)               = " + mgrs);
-        logger.info("LatLon(Mgrs(-1,0))       = " + latlon);
-        logger.info("Dist(LatLon(Mgrs(-1,0))) = " + dist);
-        
-        mgrs   = new MgrsPoint(base.plusLatInMeters(-1).plusLonInMeters(-1));
-        latlon = newLatLonPoint().from(mgrs).build();
-        dist   = base.distanceTo(latlon).inMeters();
-        logger.info("Mgrs(-1,-1)              = " + mgrs);
-        logger.info("LatLon(Mgrs(-1,-1))      = " + latlon);
-        logger.info("Dist(LatLon(Mgrs(-1,-1)) = " + dist);
-        
-        mgrs   = new MgrsPoint(base.plusLonInMeters(-1).plusLatInMeters(-1));
-        latlon = newLatLonPoint().from(mgrs).build();
-        dist   = base.distanceTo(latlon).inMeters();
-        logger.info("Mgrs(-1,-1)              = " + mgrs);
-        logger.info("LatLon(Mgrs(-1,-1))      = " + latlon);
-        logger.info("Dist(LatLon(Mgrs(-1,-1)) = " + dist);
-        
-        LatLonPoint neat = base.plusLonInMeters(-1).plusLatInMeters(-1);
-        base   = newLatLonPoint().withLat(-4.368e-8).withLon(-1.207e-8).build();
-        mgrs   = new MgrsPoint(base);
-        latlon = newLatLonPoint().from(mgrs).build();
-        dist   = base.distanceTo(latlon).inMeters();
-        logger.info("Base                      = " + base);
-        logger.info("Neat                      = " + neat);
-        logger.info("Mgrs(manual)              = " + mgrs);
-        logger.info("Mgrs(neat)                = " + new MgrsPoint(neat));
-        logger.info("LatLon(Mgrs(manual))      = " + latlon);
-        logger.info("Dist(LatLon(Mgrs(manual)) = " + dist);
-        
-        
-        for (double latIter = 0; latIter > -1e-7; latIter += -1e-8) {
-            for (double lonIter = 0; lonIter > -1e-7; lonIter += -1e-8) {
-                LatLonPoint ll = newLatLonPoint().withLat(latIter).withLon(lonIter).build();
-                String results = Coordinates.mgrsFromLatLon(latIter, lonIter);
-                LatLonPoint after = newLatLonPoint().from(new MgrsPoint(ll)).build();
-                logger.info("(" + latIter + "," + lonIter + ") = " + results);
-                logger.info("Dist = " + ll.distanceTo(after).inMeters());
-            }
-        }*/
-        
-        com.bbn.openmap.proj.coords.LatLonPoint ll = new LatLonPointDouble(0, 0);
-        MGRSPoint mgrs = MGRSPoint.LLtoMGRS(ll);
-        com.bbn.openmap.proj.coords.LatLonPoint llFromMgrs = new LatLonPointDouble();
-        MGRSPoint.MGRStoLL(mgrs, Ellipsoid.WGS_84, llFromMgrs);
-        logger.info("ll = " + ll);
-        logger.info("mgrs = " + mgrs);
-        logger.info("mgrs string = " + mgrs.getMGRS());
-        logger.info("ll from mgrs = " + llFromMgrs);
-        
-        ll = new LatLonPointDouble(-1e-8, 0);
-        mgrs = MGRSPoint.LLtoMGRS(ll);
-        MGRSPoint.MGRStoLL(mgrs, Ellipsoid.WGS_84, llFromMgrs);
-        logger.info("ll = " + ll);
-        logger.info("mgrs = " + mgrs);
-        logger.info("mgrs string = " + mgrs.getMGRS());
-        logger.info("ll from mgrs = " + llFromMgrs);
-        
-        LatLonPoint from = new LatLonPoint(0, 0, 0);
-        LatLonPoint to = from.plusLatInMeters(1);
-        logger.info("Lat Distance: " + from.distanceToLatInMeters(to));
-        logger.info("Lat Distance: " + from.distanceTo(to).inMeters());
-        to = from.plusLonInMeters(1);
-        logger.info("Lon Distance: " + from.distanceToLonInMeters(to));
-        logger.info("Lon Distance: " + from.distanceTo(to).inMeters());
-        to = from.plusLatInMeters(1).plusLonInMeters(1);
-        logger.info("Lon Distance: " + from.distanceToLonInMeters(to));
-        logger.info("Lon Distance: " + from.distanceTo(to).inMeters());
+        com.rogue.unipoint.LatLonPoint myLL = new com.rogue.unipoint.LatLonPoint(0, 0, 0);
+        myLL = myLL.plusLonInMeters(-1);
+        logger.info(myLL.toString());*/
     }
     
     @Test
     public void testDistance() {
-        // Test the distance between two identical points
-        /*MgrsPoint point = newMgrsPoint().withEasting(100)
-                                        .withNorthing(100).build();
-        GridPoint expected = newGridPoint().
-        //GridPoint distance = point.distanceTo(point);
-        assertEquals("Identical Points", new GridPoint(0, 0), 
+        /*LatLonPoint nicePoint = new LatLonPointDouble();
+        LatLonPoint nicePoint2 = new LatLonPointDouble(0, Length.METER.toRadians(1), true);
         
-        // Test the distance between two points in the same grid/sub-grid space
-        MgrsPoint point2 = newMgrsPoint().withEasting(200)
-                                         .withNorthing(200).build();
-        distance = point.distanceTo(point2);
-        assertEquals("Same Grid/Sub-Grid - Easting", 100, distance.getColumn());
-        assertEquals("Same")*/
-    }
+        com.rogue.unipoint.LatLonPoint point = new com.rogue.unipoint.LatLonPoint();
+        com.rogue.unipoint.LatLonPoint point2 = point.plusLonInMeters(1);
+        double wgs84Dist = Length.METER.fromRadians(nicePoint.distance(nicePoint2));
+        double approxDist = point.distanceTo(point2).inMeters();
+        logger.info("1 Meter Error: " + (Math.abs(wgs84Dist / approxDist - 1) * 100) + "%");
+        
+        nicePoint2 = new LatLonPointDouble(0, Length.METER.toRadians(10), true);
+        point2 = point.plusLonInMeters(10);
+        wgs84Dist = Length.METER.fromRadians(nicePoint.distance(nicePoint2));
+        approxDist = point.distanceTo(point2).inMeters();
+        logger.info("10 Meter Error: " + (Math.abs(wgs84Dist / approxDist - 1) * 100) + "%");
+        
+        nicePoint2 = new LatLonPointDouble(0, Length.METER.toRadians(100), true);
+        point2 = point.plusLonInMeters(100);
+        wgs84Dist = Length.METER.fromRadians(nicePoint.distance(nicePoint2));
+        approxDist = point.distanceTo(point2).inMeters();
+        logger.info("100 Meter Error: " + (Math.abs(wgs84Dist / approxDist - 1) * 100) + "%");
+        
+        nicePoint2 = new LatLonPointDouble(0, Length.METER.toRadians(1000), true);
+        point2 = point.plusLonInMeters(1000);
+        wgs84Dist = Length.METER.fromRadians(nicePoint.distance(nicePoint2));
+        approxDist = point.distanceTo(point2).inMeters();
+        logger.info("1000 Meter Error: " + (Math.abs(wgs84Dist / approxDist - 1) * 100) + "%");
+        
+        nicePoint = new LatLonPointDouble(Length.DECIMAL_DEGREE.toRadians(45), 0, true);
+        point = new com.rogue.unipoint.LatLonPoint(0, 45, 0);
+        
+        nicePoint2 = new LatLonPointDouble(Length.DECIMAL_DEGREE.toRadians(45), Length.METER.toRadians(1), true);
+        point2 = point.plusLonInMeters(1);
+        wgs84Dist = Length.METER.fromRadians(nicePoint.distance(nicePoint2));
+        approxDist = point.distanceTo(point2).inMeters();
+        logger.info("1 Meter, 45 Degree WGS84: " + wgs84Dist);
+        logger.info("1 Meter, 45 Degree Approx:" + approxDist);
+        logger.info("1 Meter, 45 Degree Error: " + (Math.abs(wgs84Dist / approxDist - 1) * 100) + "%");
+        
+        nicePoint2 = new LatLonPointDouble(Length.DECIMAL_DEGREE.toRadians(45), Length.METER.toRadians(10), true);
+        point2 = point.plusLonInMeters(10);
+        wgs84Dist = Length.METER.fromRadians(nicePoint.distance(nicePoint2));
+        approxDist = point.distanceTo(point2).inMeters();
+        logger.info("10 Meter, 45 Degree WGS84: " + wgs84Dist);
+        logger.info("10 Meter, 45 Degree Approx:" + approxDist);
+        logger.info("10 Meter, 45 Degree Error: " + (Math.abs(wgs84Dist / approxDist - 1) * 100) + "%");
+        
+        nicePoint2 = new LatLonPointDouble(Length.DECIMAL_DEGREE.toRadians(45), Length.METER.toRadians(100), true);
+        point2 = point.plusLonInMeters(100);
+        wgs84Dist = Length.METER.fromRadians(nicePoint.distance(nicePoint2));
+        approxDist = point.distanceTo(point2).inMeters();
+        logger.info("100 Meter, 45 Degree WGS84: " + wgs84Dist);
+        logger.info("100 Meter, 45 Degree Approx:" + approxDist);
+        logger.info("100 Meter, 45 Degree Error: " + (Math.abs(wgs84Dist / approxDist - 1) * 100) + "%");
+        
+        nicePoint2 = new LatLonPointDouble(Length.DECIMAL_DEGREE.toRadians(45), Length.METER.toRadians(1000), true);
+        point2 = point.plusLonInMeters(1000);
+        wgs84Dist = Length.METER.fromRadians(nicePoint.distance(nicePoint2));
+        approxDist = point.distanceTo(point2).inMeters();
+        logger.info("1000 Meter, 45 Degree WGS84: " + wgs84Dist);
+        logger.info("1000 Meter, 45 Degree Approx:" + approxDist);
+        logger.info("1000 Meter, 45 Degree Error: " + (Math.abs(wgs84Dist / approxDist - 1) * 100) + "%");
+    */}
 }
