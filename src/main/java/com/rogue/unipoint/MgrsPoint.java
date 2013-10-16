@@ -38,7 +38,7 @@ public class MgrsPoint {
         private Resolution(int raw) { this.raw = raw; }
         
         public static Resolution parse(int raw) {
-            return ONE_METER.plus(raw - 1);
+            return ONE_METER.plus(raw);
         }
         
         public Resolution plus(int levels) {
@@ -245,10 +245,10 @@ public class MgrsPoint {
                              .build();
     }
     public int getPositionEasting(Resolution resolution) {
-        return getPosition(resolution).getColumn();
+        return getPosition().getColumn() / (int) Math.pow(10, resolution.raw()-1);
     }
     public int getPositionNorthing(Resolution resolution) {
-        return getPosition(resolution).getRow();
+        return getPosition().getRow() / (int) Math.pow(10, resolution.raw()-1);
     }
     
     public Resolution getResolution() { return resolution; }

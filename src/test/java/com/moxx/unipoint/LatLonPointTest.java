@@ -1,6 +1,9 @@
 package com.moxx.unipoint;
 
+import com.bbn.openmap.proj.Length;
 import com.rogue.unipoint.LatLonPoint;
+import static com.rogue.unipoint.LatLonPoint.LatLonPointBuilder.newLatLonPoint;
+import com.rogue.unipoint.MgrsPoint;
 import static org.junit.Assert.*;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -19,6 +22,45 @@ public class LatLonPointTest {
         logger.info("Actual:    " + actual);
         logger.info("Tolerance: " + tolerance);
         return ((expected - tolerance <= actual) && (actual <= expected + tolerance));
+    }
+    
+    @Test
+    public void testMgrsConversion() {
+        LatLonPoint beforeDrag          = new LatLonPoint(0, 39.99681835530467, -82.98806076341697);
+        MgrsPoint   beforeDragMgrs      = new MgrsPoint(beforeDrag);
+        LatLonPoint beforeDragMgrsLL    = newLatLonPoint().from(beforeDragMgrs).build();
+        double      beforeDragOffsetLat = beforeDragMgrsLL.distanceToLatInMeters(beforeDrag);
+        double      beforeDragOffsetLon = beforeDragMgrsLL.distanceToLonInMeters(beforeDrag);
+        
+        LatLonPoint afterDrag           = new LatLonPoint(0, 39.99681880272974, -82.98806091418044);
+        MgrsPoint   afterDragMgrs       = new MgrsPoint(afterDrag);
+        LatLonPoint afterDragMgrsLL     = newLatLonPoint().from(afterDragMgrs).build();
+        double      afterDragOffsetLat  = afterDragMgrsLL.distanceToLatInMeters(afterDrag);
+        double      afterDragOffsetLon  = afterDragMgrsLL.distanceToLonInMeters(afterDrag);
+        
+        double offsetFromLastLat    = beforeDragMgrsLL.distanceToLatInMeters(afterDrag);
+        double offsetFromCurrentLat = afterDrag.distanceToLatInMeters(afterDragMgrsLL);
+        
+        LatLonPoint beforeMgrsPlusOne = beforeDragMgrsLL.plusLatInMeters(1);
+        logger.info("BeforeMgrsPlusOne: " + beforeMgrsPlusOne);
+        logger.info("MgrsLLDist: " + beforeDragMgrsLL.distanceTo(afterDragMgrsLL).inMeters());
+        
+        logger.info("BeforeDrag:          " + beforeDrag);
+        logger.info("AfterDrag:           " + afterDrag);
+        logger.info("BeforeDragMgrs:      " + beforeDragMgrs);
+        logger.info("AfterDragMgrs:       " + afterDragMgrs);
+        logger.info("BeforeDragMgrsLL:    " + beforeDragMgrsLL);
+        logger.info("AfterDragMgrsLL:     " + afterDragMgrsLL);
+        logger.info("BeforeDragOffsetLat: " + beforeDragOffsetLat);
+        logger.info("AfterDragOffsetLat:  " + afterDragOffsetLat);
+        logger.info("BeforeDragOffsetLon: " + beforeDragOffsetLon);
+        logger.info("AfterDragOffsetLon:  " + afterDragOffsetLon);
+        
+        logger.info("From Last Lat:    " + offsetFromLastLat);
+        logger.info("From Current Lat: " + offsetFromCurrentLat);
+        logger.info("Cos = " + Math.cos(Length.DECIMAL_DEGREE.toRadians(39.9968188)));
+        logger.info("Compensated = " + (beforeDragOffsetLat / Math.cos(Length.DECIMAL_DEGREE.toRadians(39.9968188))));
+        logger.info("Compensated = " + (afterDragOffsetLat / Math.cos(Length.DECIMAL_DEGREE.toRadians(39.99681880272974))));
     }
     
     @Test
